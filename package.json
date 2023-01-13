@@ -5,15 +5,19 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node ./src/app.js",
-    "dev": "node ./src/app.js"
+    "start": "node ./src/server.js",
+    "dev": "nodemon ./src/server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "cors": "^2.8.5",
+    "dayjs": "^1.11.7",
+    "dotenv": "^16.0.3",
     "express": "^4.18.2",
+    "joi": "^17.7.0",
+    "mongodb": "^4.13.0",
     "nodemon": "^2.0.20"
   }
 }
