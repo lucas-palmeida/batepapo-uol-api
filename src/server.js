@@ -23,8 +23,8 @@ app.use(express.json());
 
 app.post('/participants', async (req, res) => { 
   const { name } = req.body;
-
-  if(name.length < 1) return res.sendStatus(422);
+  
+  if(name === undefined || name.length < 1) return res.sendStatus(422);
 
   try {
     const verifyName = await db.collection('participants').findOne({ name });
@@ -55,7 +55,7 @@ app.post('/messages', async (req, res) => {
   const { to, text, type } = req.body;
   const from = req.headers.user;
 
-  if(to.length < 1 || text.length < 1) return res.sendStatus(422);
+  if(to.length < 1 || text.length < 1 || to === undefined || text === undefined) return res.sendStatus(422);
   if(type !== 'message' && type !== 'private_message') return res.sendStatus(422);
 
   try {
