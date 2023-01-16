@@ -2,6 +2,7 @@ import express, { json } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { MongoClient } from "mongodb";
+import joi from "joi";
 import dayjs from "dayjs";
 
 dotenv.config();
@@ -21,6 +22,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const participantSchema = joi.object({
+  user: joi.string().min(1).required()
+})
+
 setInterval(async () => {
   const now = dayjs(Date.now());
   const participants = await db.collection('participants').find();
@@ -35,8 +40,9 @@ setInterval(async () => {
 
 app.post('/participants', async (req, res) => { 
   const { name } = req.body;
+  const validation = participantSchema.validate(name, { abortEarly: false });
   
-  if(name === undefined || name.length < 1) return res.sendStatus(422);
+  if(validation.error || name === undefined) return res.sendStatus(422);
 
   try {
     const verifyName = await db.collection('participants').findOne({ name });
