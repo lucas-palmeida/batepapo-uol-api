@@ -21,6 +21,18 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+setInterval(async () => {
+  const now = dayjs(Date.now());
+  const participants = await db.collection('participants').find();
+
+  participants.forEach(async participant => {
+    if(now.diff(dayjs(participant.lastStatus), 'second') > 10) {
+      await db.collection('participants').deleteOne({ name: participant.name });
+      await db.collection('messages').insertOne({ from: participant.name, to: 'Todos', text: 'sai na sala...', type: 'status', time: dayjs(now).format('HH:mm:ss') });
+    }
+  })
+}, 15000);
+
 app.post('/participants', async (req, res) => { 
   const { name } = req.body;
   
@@ -45,6 +57,7 @@ app.post('/participants', async (req, res) => {
 app.get('/participants', async (req, res) => {
   try {
     const participants = await db.collection('participants').find().toArray();
+    
     return res.send(participants);
   } catch(err) {
     return res.status(500).send(err);
@@ -88,6 +101,16 @@ app.get('/messages', async (req, res) => {
   } catch(err) {
     return res.status(500).send(err);
   }
+})
+
+app.post('/status', async (req, res) => {
+  const name = req.headers.user;
+  const verifyParticipant = await db.collection('participants').findOne({ name });
+
+  if(!verifyParticipant) return res.sendStatus(404);
+
+  await db.collection('participants').updateOne({ name }, { $set: { lastStatus: Date.now() }});
+  return res.sendStatus(200);
 })
 
 app.listen(5000);
