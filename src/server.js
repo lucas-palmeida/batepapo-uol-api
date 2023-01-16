@@ -35,26 +35,24 @@ setInterval(async () => {
 }, 15000);
 
 app.post('/participants', async (req, res) => {
-  const name = req.body;
+  const participant = req.body;
   const participantSchema = Joi.object({
     name: Joi.string().min(1).required(),
   })
   
-  // if(name === undefined || name.length < 1) return res.sendStatus(422);
-
   try {
-    const validation = participantSchema.validate(name, { abortEarly: false });
+    const validation = participantSchema.validate(participant, { abortEarly: false });
 
     if(validation.error) return res.sendStatus(422);
 
-    const verifyName = await db.collection('participants').findOne({ name });
+    const verifyName = await db.collection('participants').findOne({ name: participant.name });
 
     if(verifyName) return res.sendStatus(409);
 
     const lastStatus = Date.now();
 
-    await db.collection('participants').insertOne({ name, lastStatus });
-    await db.collection('messages').insertOne({ from: name, to: 'Todos', text: 'entra na sala...', type: 'status', time: dayjs(lastStatus).format('HH:mm:ss') });
+    await db.collection('participants').insertOne({ name: participant.name, lastStatus });
+    await db.collection('messages').insertOne({ from: participant.name, to: 'Todos', text: 'entra na sala...', type: 'status', time: dayjs(lastStatus).format('HH:mm:ss') });
 
     return res.sendStatus(201);
   } catch(err) {
@@ -73,18 +71,25 @@ app.get('/participants', async (req, res) => {
 });
 
 app.post('/messages', async (req, res) => {
-  const { to, text, type } = req.body;
+  const message = req.body; // { to, text, type }
   const from = req.headers.user;
 
-  if(to.length < 1 || text.length < 1 || to === undefined || text === undefined) return res.sendStatus(422);
-  if(type !== 'message' && type !== 'private_message') return res.sendStatus(422);
+  const messageSchema = Joi.object({
+    to: Joi.string().min(1).required(),
+    text: Joi.string().min(1).required(),
+    type: Joi.string().min(7).required(),
+  })
 
   try {
+    const validation = messageSchema.validate(message, { abortEarly: false });
+
+    if(validation.error || (message.type !== 'message' && message.type !== 'private_message')) return res.sendStatus(422);
+
     const verifyParticipant = await db.collection('participants').findOne({ name: from});
   
     if(!verifyParticipant) return res.sendStatus(422);
 
-    await db.collection('messages').insertOne({ from, to, text, type, time: dayjs().format('HH:mm:ss') });
+    await db.collection('messages').insertOne({ from, to: message.to, text: message.text, type: message.type, time: dayjs().format('HH:mm:ss') });
 
     return res.sendStatus(201);
   } catch(err) {
