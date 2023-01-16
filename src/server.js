@@ -99,16 +99,16 @@ app.post('/messages', async (req, res) => {
 
 app.get('/messages', async (req, res) => {
   const from = req.headers.user;
-  let limit = parseInt(req.query.limit);
+  const limit = req.query.limit;
 
   try {
-    if(limit <= 0 || (isNaN(limit) && limit === undefined)) return res.sendStatus(422);
+    if(parseInt(limit) < 1 || (isNaN(parseInt(limit)) && limit !== undefined)) return res.sendStatus(422);
     
     const messages = await db.collection('messages').find().toArray();
     const filteredMessages = messages.filter(message => message.to === 'Todos' || message.to === from || message.from === from).reverse();
 
-    if(filteredMessages.length > limit) {
-      return res.send(filteredMessages.slice(0, limit));
+    if(filteredMessages.length > parseInt(limit)) {
+      return res.send(filteredMessages.slice(0, parseInt(limit)));
     }
 
     return res.send(filteredMessages);
